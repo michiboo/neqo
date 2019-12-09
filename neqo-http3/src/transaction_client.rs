@@ -53,7 +53,7 @@ impl Request {
         r
     }
 
-    pub fn ensure_encoded(&mut self, encoder: &mut QPackEncoder, stream_id: u64) {
+    pub fn ensure_encoded(&mut self, encoder: &mut QPackEncoder, stream_id: StreamId) {
         if self.buf.is_some() {
             return;
         }
@@ -73,7 +73,7 @@ impl Request {
         &mut self,
         conn: &mut Connection,
         encoder: &mut QPackEncoder,
-        stream_id: u64,
+        stream_id: StreamId,
     ) -> Res<bool> {
         let label = if ::log::log_enabled!(::log::Level::Debug) {
             format!("{}", self)
@@ -165,7 +165,7 @@ enum ResponseHeadersState {
 pub struct TransactionClient {
     send_state: TransactionSendState,
     recv_state: TransactionRecvState,
-    stream_id: u64,
+    stream_id: StreamId,
     frame_reader: HFrameReader,
     response_headers_state: ResponseHeadersState,
     conn_events: Http3ClientEvents,
@@ -173,7 +173,7 @@ pub struct TransactionClient {
 
 impl TransactionClient {
     pub fn new(
-        stream_id: u64,
+        stream_id: StreamId,
         method: &str,
         scheme: &str,
         host: &str,

@@ -13,7 +13,7 @@ pub trait ReadByte {
 
 struct ReceiverWrapper<'a> {
     conn: &'a mut Connection,
-    stream_id: u64,
+    stream_id: StreamId,
 }
 
 impl<'a> ReadByte for ReceiverWrapper<'a> {
@@ -72,7 +72,7 @@ impl<'a> ReadByte for BufWrapper<'a> {
 
 pub fn read_prefixed_encoded_int_with_connection(
     conn: &mut Connection,
-    stream_id: u64,
+    stream_id: StreamId,
     val: &mut u64,
     cnt: &mut u8,
     prefix_len: u8,

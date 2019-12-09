@@ -121,19 +121,19 @@ impl Http3Client {
         Ok(id)
     }
 
-    pub fn stream_reset(&mut self, stream_id: u64, error: AppError) -> Res<()> {
+    pub fn stream_reset(&mut self, stream_id: StreamId, error: AppError) -> Res<()> {
         qinfo!([self], "reset_stream {} error={}.", stream_id, error);
         self.base_handler
             .stream_reset(&mut self.conn, stream_id, error)
     }
 
-    pub fn stream_close_send(&mut self, stream_id: u64) -> Res<()> {
+    pub fn stream_close_send(&mut self, stream_id: StreamId) -> Res<()> {
         qinfo!([self], "Close sending side stream={}.", stream_id);
         self.base_handler
             .stream_close_send(&mut self.conn, stream_id)
     }
 
-    pub fn send_request_body(&mut self, stream_id: u64, buf: &[u8]) -> Res<usize> {
+    pub fn send_request_body(&mut self, stream_id: StreamId, buf: &[u8]) -> Res<usize> {
         qinfo!(
             [self],
             "send_request_body from stream {} sending {} bytes.",
@@ -147,7 +147,7 @@ impl Http3Client {
             .send_request_body(&mut self.conn, buf)
     }
 
-    pub fn read_response_headers(&mut self, stream_id: u64) -> Res<(Vec<Header>, bool)> {
+    pub fn read_response_headers(&mut self, stream_id: StreamId) -> Res<(Vec<Header>, bool)> {
         qinfo!([self], "read_response_headers from stream {}.", stream_id);
         let transaction = self
             .base_handler
@@ -168,7 +168,7 @@ impl Http3Client {
     pub fn read_response_data(
         &mut self,
         now: Instant,
-        stream_id: u64,
+        stream_id: StreamId,
         buf: &mut [u8],
     ) -> Res<(usize, bool)> {
         qinfo!([self], "read_data from stream {}.", stream_id);
@@ -690,7 +690,7 @@ mod tests {
 
     // We usually send the same request header. This function check if the request has been
     // receive properly by a peer.
-    fn check_header_frame(peer_conn: &mut Connection, stream_id: u64, expected_fin: bool) {
+    fn check_header_frame(peer_conn: &mut Connection, stream_id: StreamId, expected_fin: bool) {
         let mut buf = [0u8; 18];
         let (amount, fin) = peer_conn.stream_recv(stream_id, &mut buf).unwrap();
         const EXPECTED_REQUEST_HEADER_FRAME: &[u8] = &[

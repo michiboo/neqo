@@ -31,7 +31,7 @@ impl Http3Handler {
             handler: Http3Connection::new(max_table_size, max_blocked_streams),
         }
     }
-    pub fn set_response(&mut self, stream_id: u64, headers: &[Header], data: Vec<u8>) -> Res<()> {
+    pub fn set_response(&mut self, stream_id: StreamId, headers: &[Header], data: Vec<u8>) -> Res<()> {
         self.handler
             .transactions
             .get_mut(&stream_id)
@@ -44,7 +44,7 @@ impl Http3Handler {
     pub fn stream_reset(
         &mut self,
         conn: &mut Connection,
-        stream_id: u64,
+        stream_id: StreamId,
         app_error: AppError,
     ) -> Res<()> {
         self.handler.stream_reset(conn, stream_id, app_error)
@@ -67,7 +67,7 @@ impl Http3Handler {
 pub struct ClientRequestStream {
     conn: ActiveConnectionRef,
     handler: Rc<RefCell<Http3Handler>>,
-    stream_id: u64,
+    stream_id: StreamId,
 }
 
 impl ::std::fmt::Display for ClientRequestStream {
@@ -85,7 +85,7 @@ impl ClientRequestStream {
     pub fn new(
         conn: ActiveConnectionRef,
         handler: Rc<RefCell<Http3Handler>>,
-        stream_id: u64,
+        stream_id: StreamId,
     ) -> Self {
         ClientRequestStream {
             conn,

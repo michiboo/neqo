@@ -116,7 +116,7 @@ impl QPackDecoder {
     }
 
     // returns a list of unblocked streams
-    pub fn receive(&mut self, conn: &mut Connection, stream_id: u64) -> Res<Vec<u64>> {
+    pub fn receive(&mut self, conn: &mut Connection, stream_id: StreamId) -> Res<Vec<u64>> {
         self.read_instructions(conn, stream_id)?;
         let base = self.table.base();
         let r = self
@@ -131,7 +131,7 @@ impl QPackDecoder {
 
     #[allow(clippy::cognitive_complexity)]
     #[allow(clippy::useless_let_if_seq)]
-    fn read_instructions(&mut self, conn: &mut Connection, stream_id: u64) -> Res<()> {
+    fn read_instructions(&mut self, conn: &mut Connection, stream_id: StreamId) -> Res<()> {
         let label = self.to_string();
         qdebug!([self], "reading instructions");
         loop {
@@ -489,12 +489,12 @@ impl QPackDecoder {
         Ok(())
     }
 
-    fn header_ack(&mut self, stream_id: u64) {
+    fn header_ack(&mut self, stream_id: StreamId) {
         self.send_buf
             .encode_prefixed_encoded_int(0x80, 1, stream_id);
     }
 
-    pub fn cancel_stream(&mut self, stream_id: u64) {
+    pub fn cancel_stream(&mut self, stream_id: StreamId) {
         self.send_buf
             .encode_prefixed_encoded_int(0x40, 1, stream_id);
     }
@@ -523,7 +523,7 @@ impl QPackDecoder {
     }
 
     // this function returns None if the stream is blocked waiting for table insertions.
-    pub fn decode_header_block(&mut self, buf: &[u8], stream_id: u64) -> Res<Option<Vec<Header>>> {
+    pub fn decode_header_block(&mut self, buf: &[u8], stream_id: StreamId) -> Res<Option<Vec<Header>>> {
         qdebug!([self], "decode header block.");
         let mut reader = BufWrapper { buf, offset: 0 };
 
@@ -728,14 +728,14 @@ impl QPackDecoder {
         }
     }
 
-    pub fn is_recv_stream(&self, stream_id: u64) -> bool {
+    pub fn is_recv_stream(&self, stream_id: StreamId) -> bool {
         match self.remote_stream_id {
             Some(id) => id == stream_id,
             None => false,
         }
     }
 
-    pub fn add_send_stream(&mut self, stream_id: u64) {
+    pub fn add_send_stream(&mut self, stream_id: StreamId) {
         if self.local_stream_id.is_some() {
             panic!("Adding multiple local streams");
         }
@@ -744,7 +744,7 @@ impl QPackDecoder {
             .write_byte(QPACK_UNI_STREAM_TYPE_DECODER as u8);
     }
 
-    pub fn add_recv_stream(&mut self, stream_id: u64) -> Res<()> {
+    pub fn add_recv_stream(&mut self, stream_id: StreamId) -> Res<()> {
         match self.remote_stream_id {
             Some(_) => Err(Error::WrongStreamCount),
             None => {
@@ -764,7 +764,7 @@ impl ::std::fmt::Display for QPackDecoder {
 // this wraps read_prefixed_encoded_int_with_connection to return proper error.
 fn read_prefixed_encoded_int_with_connection_wrap(
     conn: &mut Connection,
-    stream_id: u64,
+    stream_id: StreamId,
     val: &mut u64,
     cnt: &mut u8,
     prefix_len: u8,

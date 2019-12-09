@@ -88,7 +88,7 @@ impl QPackEncoder {
         Ok(())
     }
 
-    pub fn recv_if_encoder_stream(&mut self, conn: &mut Connection, stream_id: u64) -> Res<bool> {
+    pub fn recv_if_encoder_stream(&mut self, conn: &mut Connection, stream_id: StreamId) -> Res<bool> {
         match self.remote_stream_id {
             Some(id) => {
                 if id == stream_id {
@@ -102,7 +102,7 @@ impl QPackEncoder {
         }
     }
 
-    fn read_instructions(&mut self, conn: &mut Connection, stream_id: u64) -> Res<()> {
+    fn read_instructions(&mut self, conn: &mut Connection, stream_id: StreamId) -> Res<()> {
         qdebug!([self], "read a new instraction");
         loop {
             match self.instruction_reader_current_inst {
@@ -268,7 +268,7 @@ impl QPackEncoder {
         }
     }
 
-    pub fn encode_header_block(&mut self, h: &[Header], stream_id: u64) -> QPData {
+    pub fn encode_header_block(&mut self, h: &[Header], stream_id: StreamId) -> QPData {
         qdebug!([self], "encoding headers.");
         let mut encoded_h = QPData::default();
         let base = self.table.base();
@@ -486,7 +486,7 @@ impl QPackEncoder {
         encode_literal(self.use_huffman, buf, 0x0, 0, value);
     }
 
-    pub fn add_send_stream(&mut self, stream_id: u64) {
+    pub fn add_send_stream(&mut self, stream_id: StreamId) {
         if self.local_stream_id.is_some() {
             panic!("Adding multiple local streams");
         }
@@ -495,7 +495,7 @@ impl QPackEncoder {
             .write_byte(QPACK_UNI_STREAM_TYPE_ENCODER as u8);
     }
 
-    pub fn add_recv_stream(&mut self, stream_id: u64) -> Res<()> {
+    pub fn add_recv_stream(&mut self, stream_id: StreamId) -> Res<()> {
         match self.remote_stream_id {
             Some(_) => Err(Error::WrongStreamCount),
             None => {

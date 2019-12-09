@@ -25,11 +25,11 @@ impl DynamicTableEntry {
         (self.name.len() + self.value.len() + 32) as u64
     }
 
-    pub fn add_ref(&mut self, stream_id: u64, _block: u8) {
+    pub fn add_ref(&mut self, stream_id: StreamId, _block: u8) {
         self.refs.insert(stream_id, 1);
     }
 
-    pub fn remove_ref(&mut self, stream_id: u64, _block: u8) {
+    pub fn remove_ref(&mut self, stream_id: StreamId, _block: u8) {
         self.refs.remove(&stream_id);
     }
 
@@ -232,7 +232,7 @@ impl HeaderTable {
         self.acked_inserts_cnt
     }
 
-    pub fn header_ack(&mut self, stream_id: u64) {
+    pub fn header_ack(&mut self, stream_id: StreamId) {
         for iter in self.dynamic.iter_mut() {
             iter.remove_ref(stream_id, 1);
         }

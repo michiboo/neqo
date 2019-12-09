@@ -31,6 +31,7 @@ pub use neqo_qpack::Header;
 pub use server::Http3Server;
 pub use server_events::Http3ServerEvent;
 pub use transaction_server::TransactionServer;
+pub use stream_id::StreamId
 
 type Res<T> = Result<T, Error>;
 

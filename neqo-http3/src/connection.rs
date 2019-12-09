@@ -28,7 +28,7 @@ const HTTP3_UNI_STREAM_TYPE_PUSH: u64 = 0x1;
 const MAX_HEADER_LIST_SIZE_DEFAULT: u64 = u64::max_value();
 
 pub trait Http3Events: Default + Debug {
-    fn reset(&self, stream_id: u64, error: AppError);
+    fn reset(&self, stream_id: StreamId, error: AppError);
     fn connection_state_change(&self, state: Http3State);
     fn remove_events_for_stream_id(&self, remove_stream_id: u64);
 }
@@ -52,13 +52,13 @@ pub trait Http3Handler<E: Http3Events, T: Http3Transaction> {
         &mut self,
         transactions: &mut HashMap<u64, T>,
         events: &mut E,
-        stream_id: u64,
+        stream_id: StreamId,
     ) -> Res<()>;
     fn handle_send_stream_writable(
         &mut self,
         transactions: &mut HashMap<u64, T>,
         events: &mut E,
-        stream_id: u64,
+        stream_id: StreamId,
     ) -> Res<()>;
     fn handle_stream_stop_sending(
         &mut self,
@@ -75,7 +75,7 @@ pub trait Http3Handler<E: Http3Events, T: Http3Transaction> {
         state: &mut Http3State,
         goaway_stream_id: u64,
     ) -> Res<()>;
-    fn handle_max_push_id(&mut self, stream_id: u64) -> Res<()>;
+    fn handle_max_push_id(&mut self, stream_id: StreamId) -> Res<()>;
     fn handle_authentication_needed(&self, events: &mut E) -> Res<()>;
 }
 
@@ -205,7 +205,7 @@ impl<E: Http3Events + Default, T: Http3Transaction, H: Http3Handler<E, T>>
         }
     }
 
-    pub fn insert_streams_have_data_to_send(&mut self, stream_id: u64) {
+    pub fn insert_streams_have_data_to_send(&mut self, stream_id: StreamId) {
         self.streams_have_data_to_send.insert(stream_id);
     }
 
@@ -298,7 +298,7 @@ impl<E: Http3Events + Default, T: Http3Transaction, H: Http3Handler<E, T>>
     fn handle_new_stream(
         &mut self,
         conn: &mut Connection,
-        stream_id: u64,
+        stream_id: StreamId,
         stream_type: StreamType,
     ) -> Res<()> {
         qinfo!([self], "A new stream: {:?} {}.", stream_type, stream_id);
@@ -335,7 +335,7 @@ impl<E: Http3Events + Default, T: Http3Transaction, H: Http3Handler<E, T>>
         }
     }
 
-    fn handle_stream_readable(&mut self, conn: &mut Connection, stream_id: u64) -> Res<()> {
+    fn handle_stream_readable(&mut self, conn: &mut Connection, stream_id: StreamId) -> Res<()> {
         qtrace!([self], "Readable stream {}.", stream_id);
 
         assert!(self.state_active());
@@ -408,7 +408,7 @@ impl<E: Http3Events + Default, T: Http3Transaction, H: Http3Handler<E, T>>
     fn handle_stream_reset(
         &mut self,
         conn: &mut Connection,
-        stream_id: u64,
+        stream_id: StreamId,
         app_err: AppError,
     ) -> Res<()> {
         qinfo!(
@@ -461,7 +461,7 @@ impl<E: Http3Events + Default, T: Http3Transaction, H: Http3Handler<E, T>>
         Ok(())
     }
 
-    fn handle_read_stream(&mut self, conn: &mut Connection, stream_id: u64) -> Res<bool> {
+    fn handle_read_stream(&mut self, conn: &mut Connection, stream_id: StreamId) -> Res<bool> {
         let label = if ::log::log_enabled!(::log::Level::Debug) {
             format!("{}", self)
         } else {
@@ -497,7 +497,7 @@ impl<E: Http3Events + Default, T: Http3Transaction, H: Http3Handler<E, T>>
         &mut self,
         conn: &mut Connection,
         stream_type: u64,
-        stream_id: u64,
+        stream_id: StreamId,
     ) -> Res<()> {
         match stream_type {
             HTTP3_UNI_STREAM_TYPE_CONTROL => {
@@ -544,7 +544,7 @@ impl<E: Http3Events + Default, T: Http3Transaction, H: Http3Handler<E, T>>
     pub fn stream_reset(
         &mut self,
         conn: &mut Connection,
-        stream_id: u64,
+        stream_id: StreamId,
         error: AppError,
     ) -> Res<()> {
         qinfo!([self], "Reset stream {} error={}.", stream_id, error);
@@ -563,7 +563,7 @@ impl<E: Http3Events + Default, T: Http3Transaction, H: Http3Handler<E, T>>
         Ok(())
     }
 
-    pub fn stream_close_send(&mut self, conn: &mut Connection, stream_id: u64) -> Res<()> {
+    pub fn stream_close_send(&mut self, conn: &mut Connection, stream_id: StreamId) -> Res<()> {
         qinfo!([self], "Close sending side for stream {}.", stream_id);
         assert!(self.state_active());
         let transaction = self
@@ -642,7 +642,7 @@ impl<E: Http3Events + Default, T: Http3Transaction, H: Http3Handler<E, T>>
         self.state.clone()
     }
 
-    pub fn add_transaction(&mut self, stream_id: u64, transaction: T) {
+    pub fn add_transaction(&mut self, stream_id: StreamId, transaction: T) {
         if transaction.has_data_to_send() {
             self.streams_have_data_to_send.insert(stream_id);
         }
@@ -687,7 +687,7 @@ impl Http3Handler<Http3ClientEvents, TransactionClient> for Http3ClientHandler {
         &mut self,
         transactions: &mut HashMap<u64, TransactionClient>,
         events: &mut Http3ClientEvents,
-        stream_id: u64,
+        stream_id: StreamId,
     ) -> Res<()> {
         qtrace!([self], "Writable stream {}.", stream_id);
 
@@ -765,7 +765,7 @@ impl Http3Handler<Http3ClientEvents, TransactionClient> for Http3ClientHandler {
         Ok(())
     }
 
-    fn handle_max_push_id(&mut self, stream_id: u64) -> Res<()> {
+    fn handle_max_push_id(&mut self, stream_id: StreamId) -> Res<()> {
         qerror!([self], "handle_max_push_id={}.", stream_id);
         Err(Error::HttpFrameUnexpected)
     }
@@ -807,7 +807,7 @@ impl Http3Handler<Http3ServerConnEvents, TransactionServer> for Http3ServerHandl
         &mut self,
         transactions: &mut HashMap<u64, TransactionServer>,
         events: &mut Http3ServerConnEvents,
-        stream_id: u64,
+        stream_id: StreamId,
     ) -> Res<()> {
         transactions.insert(stream_id, TransactionServer::new(stream_id, events.clone()));
         Ok(())
@@ -844,7 +844,7 @@ impl Http3Handler<Http3ServerConnEvents, TransactionServer> for Http3ServerHandl
         Ok(())
     }
 
-    fn handle_max_push_id(&mut self, stream_id: u64) -> Res<()> {
+    fn handle_max_push_id(&mut self, stream_id: StreamId) -> Res<()> {
         qinfo!([self], "handle_max_push_id={}.", stream_id);
         // TODO
         Ok(())

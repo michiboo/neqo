@@ -65,7 +65,7 @@ pub enum HFrame {
         header_block: Vec<u8>,
     },
     Goaway {
-        stream_id: u64,
+        stream_id: StreamId,
     },
     MaxPushId {
         push_id: u64,
@@ -205,7 +205,7 @@ impl HFrameReader {
     }
 
     // returns true if quic stream was closed.
-    pub fn receive(&mut self, conn: &mut Connection, stream_id: u64) -> Res<bool> {
+    pub fn receive(&mut self, conn: &mut Connection, stream_id: StreamId) -> Res<bool> {
         loop {
             let to_read = std::cmp::min(self.decoder.min_remaining(), 4096);
             let mut buf = vec![0; to_read];

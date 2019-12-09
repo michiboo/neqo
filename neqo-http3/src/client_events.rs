@@ -15,17 +15,17 @@ use std::rc::Rc;
 #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Clone)]
 pub enum Http3ClientEvent {
     /// Space available in the buffer for an application write to succeed.
-    HeaderReady { stream_id: u64 },
+    HeaderReady { stream_id: StreamId },
     /// A stream can accept new data.
-    DataWritable { stream_id: u64 },
+    DataWritable { stream_id: StreamId },
     /// New bytes available for reading.
-    DataReadable { stream_id: u64 },
+    DataReadable { stream_id: StreamId },
     /// Peer reset the stream.
-    Reset { stream_id: u64, error: AppError },
+    Reset { stream_id: StreamId, error: AppError },
     /// Peer has send STOP_SENDING with error code EarlyResponse, other error will post a reset event.
-    StopSending { stream_id: u64, error: AppError },
+    StopSending { stream_id: StreamId, error: AppError },
     ///A new push stream
-    NewPushStream { stream_id: u64 },
+    NewPushStream { stream_id: StreamId },
     /// New stream can be created
     RequestsCreatable,
     /// Cert authentication needed
@@ -42,19 +42,19 @@ pub struct Http3ClientEvents {
 }
 
 impl Http3ClientEvents {
-    pub fn header_ready(&self, stream_id: u64) {
+    pub fn header_ready(&self, stream_id: StreamId) {
         self.insert(Http3ClientEvent::HeaderReady { stream_id });
     }
 
-    pub fn data_writable(&self, stream_id: u64) {
+    pub fn data_writable(&self, stream_id: StreamId) {
         self.insert(Http3ClientEvent::DataWritable { stream_id });
     }
 
-    pub fn data_readable(&self, stream_id: u64) {
+    pub fn data_readable(&self, stream_id: StreamId) {
         self.insert(Http3ClientEvent::DataReadable { stream_id });
     }
 
-    pub fn stop_sending(&self, stream_id: u64, error: AppError) {
+    pub fn stop_sending(&self, stream_id: StreamId, error: AppError) {
         // Remove DataWritable event if any.
         self.remove(|evt| {
             matches!(evt, Http3ClientEvent::DataWritable {
@@ -64,7 +64,7 @@ impl Http3ClientEvents {
     }
 
     // TODO: implement push.
-    // pub fn new_push_stream(&self, stream_id: u64) {
+    // pub fn new_push_stream(&self, stream_id: StreamId) {
     //     self.insert(Http3ClientEvent::NewPushStream { stream_id });
     // }
 
@@ -108,7 +108,7 @@ impl Http3ClientEvents {
 }
 
 impl Http3Events for Http3ClientEvents {
-    fn reset(&self, stream_id: u64, error: AppError) {
+    fn reset(&self, stream_id: StreamId, error: AppError) {
         self.remove_events_for_stream_id(stream_id);
         self.insert(Http3ClientEvent::Reset { stream_id, error });
     }
@@ -117,7 +117,7 @@ impl Http3Events for Http3ClientEvents {
         self.insert(Http3ClientEvent::StateChange(state));
     }
 
-    fn remove_events_for_stream_id(&self, stream_id: u64) {
+    fn remove_events_for_stream_id(&self, stream_id: StreamId) {
         self.remove(|evt| {
             matches!(evt,
                 Http3ClientEvent::HeaderReady { stream_id: x }

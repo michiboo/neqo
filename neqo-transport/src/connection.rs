@@ -1944,32 +1944,32 @@ impl Connection {
     /// Send data on a stream.
     /// Returns how many bytes were successfully sent. Could be less
     /// than total, based on receiver credit space available, etc.
-    pub fn stream_send(&mut self, stream_id: u64, data: &[u8]) -> Res<usize> {
+    pub fn stream_send(&mut self, stream_id: StreamId, data: &[u8]) -> Res<usize> {
         self.send_streams.get_mut(stream_id.into())?.send(data)
     }
 
     /// Bytes that stream_send() is guaranteed to accept for sending.
     /// i.e. that will not be blocked by flow credits or send buffer max
     /// capacity.
-    pub fn stream_avail_send_space(&self, stream_id: u64) -> Res<u64> {
+    pub fn stream_avail_send_space(&self, stream_id: StreamId) -> Res<u64> {
         Ok(self.send_streams.get(stream_id.into())?.avail())
     }
 
     /// Close the stream. Enqueued data will be sent.
-    pub fn stream_close_send(&mut self, stream_id: u64) -> Res<()> {
+    pub fn stream_close_send(&mut self, stream_id: StreamId) -> Res<()> {
         self.send_streams.get_mut(stream_id.into())?.close();
         Ok(())
     }
 
     /// Abandon transmission of in-flight and future stream data.
-    pub fn stream_reset_send(&mut self, stream_id: u64, err: AppError) -> Res<()> {
+    pub fn stream_reset_send(&mut self, stream_id: StreamId, err: AppError) -> Res<()> {
         self.send_streams.get_mut(stream_id.into())?.reset(err);
         Ok(())
     }
 
     /// Read buffered data from stream. bool says whether read bytes includes
     /// the final data on stream.
-    pub fn stream_recv(&mut self, stream_id: u64, data: &mut [u8]) -> Res<(usize, bool)> {
+    pub fn stream_recv(&mut self, stream_id: StreamId, data: &mut [u8]) -> Res<(usize, bool)> {
         let stream = self
             .recv_streams
             .get_mut(&stream_id.into())
@@ -1980,7 +1980,7 @@ impl Connection {
     }
 
     /// Application is no longer interested in this stream.
-    pub fn stream_stop_sending(&mut self, stream_id: u64, err: AppError) -> Res<()> {
+    pub fn stream_stop_sending(&mut self, stream_id: StreamId, err: AppError) -> Res<()> {
         let stream = self
             .recv_streams
             .get_mut(&stream_id.into())

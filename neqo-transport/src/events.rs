@@ -23,19 +23,19 @@ pub enum ConnectionEvent {
     AuthenticationNeeded,
     /// A new uni (read) or bidi stream has been opened by the peer.
     NewStream {
-        stream_id: u64,
+        stream_id: StreamId,
         stream_type: StreamType,
     },
     /// Space available in the buffer for an application write to succeed.
-    SendStreamWritable { stream_id: u64 },
+    SendStreamWritable { stream_id: StreamId },
     /// New bytes available for reading.
-    RecvStreamReadable { stream_id: u64 },
+    RecvStreamReadable { stream_id: StreamId },
     /// Peer reset the stream.
-    RecvStreamReset { stream_id: u64, app_error: AppError },
+    RecvStreamReset { stream_id: StreamId, app_error: AppError },
     /// Peer has sent STOP_SENDING
-    SendStreamStopSending { stream_id: u64, app_error: AppError },
+    SendStreamStopSending { stream_id: StreamId, app_error: AppError },
     /// Peer has acked everything sent on the stream.
-    SendStreamComplete { stream_id: u64 },
+    SendStreamComplete { stream_id: StreamId },
     /// Peer increased MAX_STREAMS
     SendStreamCreatable { stream_type: StreamType },
     /// Connection state change.

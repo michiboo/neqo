@@ -257,7 +257,7 @@ impl Frame {
     /// Create a STREAM frame that fits the available space.
     /// Return a tuple of a frame and the amount of data it carries.
     pub fn new_stream(
-        stream_id: u64,
+        stream_id: StreamId,
         offset: u64,
         data: &[u8],
         fin: bool,
